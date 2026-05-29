@@ -50,7 +50,7 @@ export function RatingBadge({
           sizeClasses[size]
         )}
       >
-        <Star className={cn("fill-current stroke-[2.5]", starSizes[size])} />
+        <Star aria-hidden="true" className={cn("fill-current stroke-[2.5]", starSizes[size])} />
         <span>{rating.toFixed(1)}</span>
       </span>
 
