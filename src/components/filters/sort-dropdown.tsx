@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   Select,
   SelectContent,
@@ -16,7 +17,7 @@ interface SortDropdownProps {
   className?: string;
 }
 
-export function SortDropdown({
+export const SortDropdown = memo(function SortDropdown({
   value,
   onChange,
   className
@@ -45,4 +46,4 @@ export function SortDropdown({
       </Select>
     </div>
   );
-}
+});

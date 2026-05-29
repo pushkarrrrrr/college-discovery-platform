@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useCallback, useMemo } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { College, FilterParams } from "@/types";
 import { CollegeService } from "@/services/api";
@@ -35,31 +35,38 @@ export function CollegesList() {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  // 1. Initial State from URL params
-  const initialSearch = searchParams.get("search") || "";
-  const initialState = searchParams.get("state") || "";
-  const initialCity = searchParams.get("city") || "";
-  const initialMaxFees = searchParams.get("maxFees") ? Number(searchParams.get("maxFees")) : Infinity;
-  const initialMinRating = searchParams.get("minRating") ? Number(searchParams.get("minRating")) : 0;
-  const initialType = (searchParams.get("type") as "All" | "Private" | "Public") || "All";
-  const initialSortBy = (searchParams.get("sortBy") as "rating" | "fees_low" | "fees_high" | "placement") || "rating";
-  const initialPage = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
+  // Simulate rendering crash for testing Next.js Route Error Boundaries
+  if (typeof window !== "undefined" && window.localStorage.getItem("simulate_rendering_crash") === "true") {
+    window.localStorage.removeItem("simulate_rendering_crash");
+    throw new Error("Simulated React Rendering Crash: A fatal runtime exception occurred while rendering the listing grid.");
+  }
 
-  // Controlled UI search state
-  const [searchText, setSearchText] = useState(initialSearch);
+  // 1. Read parameters directly from URL (Single Source of Truth)
+  const search = searchParams.get("search") || "";
+  const state = searchParams.get("state") || "";
+  const city = searchParams.get("city") || "";
+  const maxFees = searchParams.get("maxFees") ? Number(searchParams.get("maxFees")) : Infinity;
+  const minRating = searchParams.get("minRating") ? Number(searchParams.get("minRating")) : 0;
+  const type = (searchParams.get("type") as "All" | "Private" | "Public") || "All";
+  const sortBy = (searchParams.get("sortBy") as "rating" | "fees_low" | "fees_high" | "placement") || "rating";
+  const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
+  const limit = 6;
+
+  // Derive filters object to pass down to presentational components (memoized to prevent child re-renders on keystrokes)
+  const filters = useMemo((): Partial<FilterParams> => ({
+    state,
+    city,
+    maxFees,
+    minRating,
+    type,
+    sortBy,
+    page,
+    limit,
+  }), [state, city, maxFees, minRating, type, sortBy, page]);
+
+  // Controlled UI search state (local state for responsive typing)
+  const [searchText, setSearchText] = useState(search);
   const debouncedSearchText = useDebounce(searchText, 300);
-
-  // Filter state
-  const [filters, setFilters] = useState<Partial<FilterParams>>({
-    state: initialState,
-    city: initialCity,
-    maxFees: initialMaxFees,
-    minRating: initialMinRating,
-    type: initialType,
-    sortBy: initialSortBy,
-    page: initialPage,
-    limit: 6,
-  });
 
   // Query responses states
   const [colleges, setColleges] = useState<College[]>([]);
@@ -89,101 +96,115 @@ export function CollegesList() {
     fetchLocations();
   }, []);
 
-  // 3. Synchronize filter changes to URL search parameters
-  const updateUrlParams = (updatedFilters: Partial<FilterParams>, searchQuery: string) => {
+  // Helper to construct a URL search parameters object from current filters + updates
+  const getUpdatedUrlParams = useCallback((updated: Partial<FilterParams>, currentSearch: string) => {
     const params = new URLSearchParams();
     
-    if (searchQuery) params.set("search", searchQuery);
-    if (updatedFilters.state) params.set("state", updatedFilters.state);
-    if (updatedFilters.city) params.set("city", updatedFilters.city);
-    if (updatedFilters.maxFees && updatedFilters.maxFees !== Infinity) {
-      params.set("maxFees", updatedFilters.maxFees.toString());
-    }
-    if (updatedFilters.minRating && updatedFilters.minRating > 0) {
-      params.set("minRating", updatedFilters.minRating.toString());
-    }
-    if (updatedFilters.type && updatedFilters.type !== "All") {
-      params.set("type", updatedFilters.type);
-    }
-    if (updatedFilters.sortBy && updatedFilters.sortBy !== "rating") {
-      params.set("sortBy", updatedFilters.sortBy);
-    }
-    if (updatedFilters.page && updatedFilters.page > 1) {
-      params.set("page", updatedFilters.page.toString());
+    // 1. Search Query
+    if (currentSearch) params.set("search", currentSearch);
+    
+    // 2. State & City
+    const finalState = updated.state !== undefined ? updated.state : state;
+    const finalCity = updated.city !== undefined ? updated.city : city;
+    if (finalState) params.set("state", finalState);
+    if (finalCity) params.set("city", finalCity);
+
+    // 3. Max Fees
+    const finalMaxFees = updated.maxFees !== undefined ? updated.maxFees : maxFees;
+    if (finalMaxFees && finalMaxFees !== Infinity) {
+      params.set("maxFees", finalMaxFees.toString());
     }
 
+    // 4. Min Rating
+    const finalMinRating = updated.minRating !== undefined ? updated.minRating : minRating;
+    if (finalMinRating && finalMinRating > 0) {
+      params.set("minRating", finalMinRating.toString());
+    }
+
+    // 5. College Type
+    const finalType = updated.type !== undefined ? updated.type : type;
+    if (finalType && finalType !== "All") {
+      params.set("type", finalType);
+    }
+
+    // 6. Sort By
+    const finalSortBy = updated.sortBy !== undefined ? updated.sortBy : sortBy;
+    if (finalSortBy && finalSortBy !== "rating") {
+      params.set("sortBy", finalSortBy);
+    }
+
+    // 7. Page
+    let finalPage = 1;
+    if (updated.page !== undefined) {
+      finalPage = updated.page;
+    } else if (
+      updated.state === undefined &&
+      updated.city === undefined &&
+      updated.maxFees === undefined &&
+      updated.minRating === undefined &&
+      updated.type === undefined &&
+      updated.sortBy === undefined
+    ) {
+      finalPage = page;
+    }
+    
+    if (finalPage > 1) {
+      params.set("page", finalPage.toString());
+    }
+
+    return params.toString();
+  }, [state, city, maxFees, minRating, type, sortBy, page]);
+
+  // 3. Update handlers writing to the URL
+  const handleFilterChange = useCallback((updated: Partial<FilterParams>) => {
+    const queryString = getUpdatedUrlParams(updated, debouncedSearchText);
     startTransition(() => {
-      router.replace(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${queryString}`);
     });
-  };
+  }, [getUpdatedUrlParams, debouncedSearchText, pathname, router]);
 
-  // 4. Fetch colleges when filters or search change
-  const fetchCollegesData = async (currentFilters: Partial<FilterParams>, currentSearch: string) => {
+  const handleClearFilters = useCallback(() => {
+    setSearchText("");
+    startTransition(() => {
+      router.replace(pathname);
+    });
+  }, [pathname, router]);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    const queryString = getUpdatedUrlParams({ page: newPage }, debouncedSearchText);
+    startTransition(() => {
+      router.replace(`${pathname}?${queryString}`);
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [getUpdatedUrlParams, debouncedSearchText, pathname, router]);
+
+  // 4. Sync effects
+  // Sync debounced search input to URL query parameters
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    if (debouncedSearchText !== urlSearch) {
+      const queryString = getUpdatedUrlParams({ page: 1 }, debouncedSearchText);
+      startTransition(() => {
+        router.replace(`${pathname}?${queryString}`);
+      });
+    }
+  }, [debouncedSearchText, searchParams, pathname, router, getUpdatedUrlParams]);
+
+  // Sync URL search parameters back to search input state (e.g. browser back/forward buttons)
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    if (urlSearch !== searchText) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSearchText(urlSearch);
+    }
+  }, [searchParams, searchText]);
+
+  // 5. Fetch colleges data on filter parameter changes
+  const fetchCollegesData = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
       const response = await CollegeService.getColleges({
-        ...currentFilters,
-        search: currentSearch,
-      } as FilterParams);
-      
-      setColleges(response.colleges);
-      setTotalColleges(response.total);
-    } catch (err) {
-      console.error(err);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Trigger data load & URL sync on changes
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchCollegesData(filters, debouncedSearchText);
-    updateUrlParams(filters, debouncedSearchText);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    debouncedSearchText,
-    filters.state,
-    filters.city,
-    filters.maxFees,
-    filters.minRating,
-    filters.type,
-    filters.sortBy,
-    filters.page,
-  ]);
-
-  // Sync URL params back to state on browser back/forward navigation
-  useEffect(() => {
-    const search = searchParams.get("search") || "";
-    const state = searchParams.get("state") || "";
-    const city = searchParams.get("city") || "";
-    const maxFees = searchParams.get("maxFees") ? Number(searchParams.get("maxFees")) : Infinity;
-    const minRating = searchParams.get("minRating") ? Number(searchParams.get("minRating")) : 0;
-    const type = (searchParams.get("type") as "All" | "Private" | "Public") || "All";
-    const sortBy = (searchParams.get("sortBy") as "rating" | "fees_low" | "fees_high" | "placement") || "rating";
-    const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
-
-    if (searchText !== search) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSearchText(search);
-    }
-
-    setFilters((prev) => {
-      if (
-        prev.state === state &&
-        prev.city === city &&
-        prev.maxFees === maxFees &&
-        prev.minRating === minRating &&
-        prev.type === type &&
-        prev.sortBy === sortBy &&
-        prev.page === page
-      ) {
-        return prev;
-      }
-      return {
-        ...prev,
         state,
         city,
         maxFees,
@@ -191,40 +212,26 @@ export function CollegesList() {
         type,
         sortBy,
         page,
-      };
-    });
-  }, [searchParams, searchText]);
+        limit,
+        search,
+      });
+      
+      setColleges(response.colleges);
+      setTotalColleges(response.total);
+    } catch (err) {
+      console.error("Failed to load colleges data:", err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, state, city, maxFees, minRating, type, sortBy, page]);
 
-  // Helper change functions
-  const handleFilterChange = (updated: Partial<FilterParams>) => {
-    setFilters((prev) => ({
-      ...prev,
-      ...updated,
-      page: 1, // Reset to first page when changing filters
-    }));
-  };
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCollegesData();
+  }, [fetchCollegesData]);
 
-  const handleClearFilters = () => {
-    setSearchText("");
-    setFilters({
-      state: "",
-      city: "",
-      maxFees: Infinity,
-      minRating: 0,
-      type: "All",
-      sortBy: "rating",
-      page: 1,
-      limit: 6,
-    });
-  };
-
-  const handlePageChange = (page: number) => {
-    setFilters((prev) => ({ ...prev, page }));
-    // Smooth scroll to top of page on navigation
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const totalPages = Math.ceil(totalColleges / (filters.limit || 6));
+  const totalPages = Math.ceil(totalColleges / limit);
 
   return (
     <div className="flex flex-col gap-6 py-4">
@@ -242,15 +249,15 @@ export function CollegesList() {
           {/* Mobile Filter Trigger Button */}
           <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
             <DrawerTrigger asChild>
-              <Button variant="outline" className="lg:hidden h-10 gap-1.5 text-xs font-bold font-sans">
-                <SlidersHorizontal className="h-4 w-4" />
+              <Button variant="outline" className="lg:hidden h-10 gap-1.5 text-xs font-bold font-sans" aria-label="Open search filters" aria-expanded={mobileDrawerOpen}>
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
                 <span>Filters</span>
                 {(filters.state ||
                   filters.city ||
                   filters.type !== "All" ||
                   filters.minRating !== 0 ||
                   (filters.maxFees && filters.maxFees !== Infinity)) && (
-                  <span className="flex h-2.5 w-2.5 rounded-full bg-primary" />
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-primary" aria-hidden="true" />
                 )}
               </Button>
             </DrawerTrigger>
@@ -259,8 +266,8 @@ export function CollegesList() {
                 <DrawerTitle className="text-left font-bold flex justify-between items-center">
                   <span>Search Filters</span>
                   <DrawerClose asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <X className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Close search filters">
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </DrawerClose>
                 </DrawerTitle>
@@ -307,7 +314,7 @@ export function CollegesList() {
           )}
 
           {error ? (
-            <ErrorState onRetry={() => fetchCollegesData(filters, debouncedSearchText)} />
+            <ErrorState onRetry={fetchCollegesData} />
           ) : loading ? (
             /* Loading skeletons */
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

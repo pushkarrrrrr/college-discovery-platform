@@ -21,19 +21,19 @@ export default function Home() {
       title: "Smart Search & Filters",
       description: "Instantly search colleges by location, maximum annual fees, program type, and student ratings.",
       icon: Search,
-      color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      color: "bg-[#FBB4A5]/20 text-[#A63B26] dark:bg-[#FBB4A5]/10 dark:text-[#FBB4A5]",
     },
     {
       title: "Side-by-Side Comparison",
       description: "Directly compare fees, courses, placements, and reviews of up to 3 colleges to find the best match.",
       icon: GitCompare,
-      color: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+      color: "bg-[#FB9EC6]/20 text-[#B83E71] dark:bg-[#FB9EC6]/10 dark:text-[#FB9EC6]",
     },
     {
       title: "Shortlist Favorites",
       description: "Save colleges of interest to your profile to track eligibility requirements and placement news.",
       icon: Bookmark,
-      color: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+      color: "bg-[#FFE893]/25 text-[#8B6700] dark:bg-[#FFE893]/10 dark:text-[#FFE893]",
     },
   ];
 
@@ -47,7 +47,7 @@ export default function Home() {
         
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl text-foreground">
           Find Your Perfect College. <br />
-          <span className="bg-gradient-to-r from-primary to-indigo-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-primary to-[#FBB4A5] bg-clip-text text-transparent">
             Compare with Certainty.
           </span>
         </h1>

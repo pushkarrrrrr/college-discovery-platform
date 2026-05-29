@@ -15,6 +15,10 @@ export const CollegeService = {
    * Fetches a paginated, filtered, and sorted list of colleges.
    */
   async getColleges(filters: Partial<FilterParams> = {}): Promise<CollegeResponse> {
+    if (typeof window !== "undefined" && window.localStorage.getItem("simulate_api_failure") === "true") {
+      await delay(200);
+      throw new Error("Simulated Connection Error: The remote API server did not respond within the 5000ms timeout limit.");
+    }
     await delay(500); // 500ms synthetic network latency
 
     const search = (filters.search || "").toLowerCase().trim();
@@ -90,6 +94,10 @@ export const CollegeService = {
    * Fetches details of a single college by its slug/id.
    */
   async getCollegeById(id: string): Promise<College | null> {
+    if (typeof window !== "undefined" && window.localStorage.getItem("simulate_api_failure") === "true") {
+      await delay(200);
+      throw new Error("Simulated Connection Error: The remote API server did not respond within the 5000ms timeout limit.");
+    }
     await delay(300); // 300ms synthetic network latency
     const college = MOCK_COLLEGES.find((c) => c.id === id);
     return college || null;

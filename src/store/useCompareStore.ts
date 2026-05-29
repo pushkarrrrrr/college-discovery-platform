@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { College } from "@/types";
 
 interface CompareState {
@@ -10,46 +11,53 @@ interface CompareState {
   setDrawerOpen: (isOpen: boolean) => void;
 }
 
-export const useCompareStore = create<CompareState>((set, get) => ({
-  selectedColleges: [],
-  isDrawerOpen: false,
+export const useCompareStore = create<CompareState>()(
+  persist(
+    (set, get) => ({
+      selectedColleges: [],
+      isDrawerOpen: false,
 
-  addCollege: (college) => {
-    const { selectedColleges } = get();
-    
-    // Check if already selected
-    if (selectedColleges.some((c) => c.id === college.id)) {
-      return { success: false, message: "College is already selected for comparison." };
+      addCollege: (college) => {
+        const { selectedColleges } = get();
+        
+        // Check if already selected
+        if (selectedColleges.some((c) => c.id === college.id)) {
+          return { success: false, message: "College is already selected for comparison." };
+        }
+
+        // Limit to 3 colleges maximum
+        if (selectedColleges.length >= 3) {
+          return { success: false, message: "You can compare up to 3 colleges at a time." };
+        }
+
+        set({
+          selectedColleges: [...selectedColleges, college],
+          isDrawerOpen: true, // Automatically open the comparison bar
+        });
+        return { success: true };
+      },
+
+      removeCollege: (collegeId) => {
+        const { selectedColleges } = get();
+        const updated = selectedColleges.filter((c) => c.id !== collegeId);
+        
+        set({
+          selectedColleges: updated,
+          // Automatically hide drawer if list becomes empty
+          isDrawerOpen: updated.length > 0 ? get().isDrawerOpen : false,
+        });
+      },
+
+      clearCompare: () => {
+        set({ selectedColleges: [], isDrawerOpen: false });
+      },
+
+      setDrawerOpen: (isOpen) => {
+        set({ isDrawerOpen: isOpen });
+      },
+    }),
+    {
+      name: "college-compare-store",
     }
-
-    // Limit to 3 colleges maximum
-    if (selectedColleges.length >= 3) {
-      return { success: false, message: "You can compare up to 3 colleges at a time." };
-    }
-
-    set({
-      selectedColleges: [...selectedColleges, college],
-      isDrawerOpen: true, // Automatically open the comparison bar
-    });
-    return { success: true };
-  },
-
-  removeCollege: (collegeId) => {
-    const { selectedColleges } = get();
-    const updated = selectedColleges.filter((c) => c.id !== collegeId);
-    
-    set({
-      selectedColleges: updated,
-      // Automatically hide drawer if list becomes empty
-      isDrawerOpen: updated.length > 0 ? get().isDrawerOpen : false,
-    });
-  },
-
-  clearCompare: () => {
-    set({ selectedColleges: [], isDrawerOpen: false });
-  },
-
-  setDrawerOpen: (isOpen) => {
-    set({ isDrawerOpen: isOpen });
-  },
-}));
+  )
+);

@@ -3,8 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { StickyCompareBar } from "@/components/compare/sticky-compare-bar";
 import { NextAuthSessionProvider } from "@/components/providers/session-provider";
+import { ClientShell } from "@/components/layout/client-shell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,12 +32,22 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold focus:shadow-lg focus:outline-hidden"
+        >
+          Skip to main content
+        </a>
         <NextAuthSessionProvider>
           <Navbar />
-          <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 focus:outline-hidden"
+          >
             {children}
           </main>
-          <StickyCompareBar />
+          <ClientShell />
           <Footer />
         </NextAuthSessionProvider>
       </body>

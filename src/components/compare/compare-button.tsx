@@ -5,7 +5,7 @@ import { College } from "@/types";
 import { Button } from "@/components/ui/button";
 import { GitCompare, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface CompareButtonProps {
   college: College;
@@ -22,8 +22,14 @@ export function CompareButton({
 }: CompareButtonProps) {
   const { selectedColleges, addCollege, removeCollege } = useCompareStore();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const isSelected = selectedColleges.some((c) => c.id === college.id);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  const isSelected = mounted && selectedColleges.some((c) => c.id === college.id);
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigating if this button is inside a card anchor

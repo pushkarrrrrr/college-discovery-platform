@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { useRouter } from "next/navigation";
 import { College } from "@/types";
 import { RatingBadge } from "@/components/ui/rating-badge";
@@ -17,13 +17,12 @@ interface CollegeCardProps {
   className?: string;
 }
 
-export function CollegeCard({ college, className }: CollegeCardProps) {
+export const CollegeCard = memo(function CollegeCard({ college, className }: CollegeCardProps) {
   const router = useRouter();
   const { savedCollegeIds, toggleSaveCollege, isAuthenticated } = useAuthStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
   
@@ -157,4 +156,4 @@ export function CollegeCard({ college, className }: CollegeCardProps) {
       </div>
     </div>
   );
-}
+});

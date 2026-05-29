@@ -67,14 +67,14 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary transition-opacity hover:opacity-90">
-            <School className="h-6 w-6 stroke-[2]" />
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary transition-opacity hover:opacity-90" aria-label="EduDiscover Home">
+            <School className="h-6 w-6 stroke-[2]" aria-hidden="true" />
             <span>EduDiscover</span>
           </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-6" aria-label="Main Navigation">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -82,18 +82,23 @@ export function Navbar() {
             // Hide protected links if not authenticated (or show disabled/login state)
             if (link.protected && (!mounted || !nextAuthIsAuthenticated)) return null;
 
+            const ariaLabel = typeof link.badge === "number" && link.badge > 0
+              ? `${link.name} (${link.badge} items)`
+              : link.name;
+
             return (
               <Link
                 key={link.href}
                 href={link.href}
+                aria-label={ariaLabel}
                 className={`relative flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${
                   isActive ? "text-primary font-semibold" : "text-muted-foreground"
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4" aria-hidden="true" />
                 <span>{link.name}</span>
                 {typeof link.badge === "number" && link.badge > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground animate-pulse">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground animate-pulse" aria-hidden="true">
                     {link.badge}
                   </span>
                 )}
@@ -110,24 +115,28 @@ export function Navbar() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground border border-border">
-                  <User className="h-4 w-4" />
+                  <User className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold text-foreground leading-none">{nextAuthUser?.name}</span>
                   <span className="text-[10px] leading-tight">{nextAuthUser?.email}</span>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => signOut({ callbackUrl: "/" })} title="Sign Out">
-                <LogOut className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => signOut({ callbackUrl: "/" })}
+                title="Sign Out"
+                aria-label="Sign Out"
+              >
+                <LogOut className="h-4 w-4 text-muted-foreground hover:text-destructive" aria-hidden="true" />
               </Button>
             </div>
           ) : (
-            <Link href={`/login?callbackUrl=${pathname}`}>
-              <Button size="sm" className="gap-1.5 cursor-pointer">
-                <LogIn className="h-4 w-4" />
-                <span>Sign In</span>
-              </Button>
-            </Link>
+            <Button size="sm" className="gap-1.5 cursor-pointer" render={<Link href={`/login?callbackUrl=${pathname}`} aria-label="Sign in to your account" />}>
+              <LogIn className="h-4 w-4" aria-hidden="true" />
+              <span>Sign In</span>
+            </Button>
           )}
         </div>
 
@@ -138,8 +147,13 @@ export function Navbar() {
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6" aria-hidden="true" />
+            ) : (
+              <Menu className="h-6 w-6" aria-hidden="true" />
+            )}
           </Button>
         </div>
       </div>
@@ -147,28 +161,33 @@ export function Navbar() {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-border bg-background px-4 py-4 space-y-4 animate-in slide-in-from-top-4 duration-200">
-          <nav className="flex flex-col gap-3">
+          <nav className="flex flex-col gap-3" aria-label="Mobile Navigation">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
 
-               if (link.protected && (!mounted || !nextAuthIsAuthenticated)) return null;
+              if (link.protected && (!mounted || !nextAuthIsAuthenticated)) return null;
+
+              const ariaLabel = typeof link.badge === "number" && link.badge > 0
+                ? `${link.name} (${link.badge} items)`
+                : link.name;
 
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
+                  aria-label={ariaLabel}
                   className={`flex items-center justify-between rounded-md p-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
                     isActive ? "bg-accent text-accent-foreground font-semibold" : "text-muted-foreground"
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-4 w-4" aria-hidden="true" />
                     <span>{link.name}</span>
                   </div>
                   {typeof link.badge === "number" && link.badge > 0 && (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground" aria-hidden="true">
                       {link.badge}
                     </span>
                   )}
@@ -185,25 +204,32 @@ export function Navbar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground border border-border">
-                  <User className="h-4 w-4" />
+                  <User className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold text-foreground leading-none">{nextAuthUser?.name}</span>
                   <span className="text-[10px] text-muted-foreground leading-tight">{nextAuthUser?.email}</span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => { signOut({ callbackUrl: "/" }); setMobileMenuOpen(false); }} className="gap-1.5 text-muted-foreground hover:text-destructive">
-                <LogOut className="h-4 w-4" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  signOut({ callbackUrl: "/" });
+                  setMobileMenuOpen(false);
+                }}
+                className="gap-1.5 text-muted-foreground hover:text-destructive"
+                aria-label="Sign Out"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
                 <span>Sign Out</span>
               </Button>
             </div>
           ) : (
-            <Link href={`/login?callbackUrl=${pathname}`} onClick={() => setMobileMenuOpen(false)} className="w-full">
-              <Button size="sm" className="w-full gap-1.5 cursor-pointer">
-                <LogIn className="h-4 w-4" />
-                <span>Sign In</span>
-              </Button>
-            </Link>
+            <Button size="sm" className="w-full gap-1.5 cursor-pointer" render={<Link href={`/login?callbackUrl=${pathname}`} onClick={() => setMobileMenuOpen(false)} className="w-full" aria-label="Sign in to your account" />}>
+              <LogIn className="h-4 w-4" aria-hidden="true" />
+              <span>Sign In</span>
+            </Button>
           )}
         </div>
       )}

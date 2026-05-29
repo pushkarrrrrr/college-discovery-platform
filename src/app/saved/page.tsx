@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { CollegeService } from "@/services/api";
 import { College } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Bookmark, ShieldAlert, LogIn, Trash2, ArrowRight } from "lucide-react";
+import { ErrorState } from "@/components/ui/error-state";
 
 export default function SavedPage() {
   const { data: session, status } = useSession();
@@ -18,6 +19,7 @@ export default function SavedPage() {
   const [savedColleges, setSavedColleges] = useState<College[]>([]);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -31,23 +33,27 @@ export default function SavedPage() {
     }
   }, [session, status, syncSessionUser]);
 
-  useEffect(() => {
-    async function loadSaved() {
-      if (!nextAuthIsAuthenticated) return;
-      setLoading(true);
-      try {
-        const response = await CollegeService.getColleges();
-        // Filter colleges that match saved IDs
-        const filtered = response.colleges.filter((c) => savedCollegeIds.includes(c.id));
-        setSavedColleges(filtered);
-      } catch (err) {
-        console.error("Failed to load saved colleges", err);
-      } finally {
-        setLoading(false);
-      }
+  const loadSaved = useCallback(async () => {
+    if (!nextAuthIsAuthenticated) return;
+    setLoading(true);
+    setError(false);
+    try {
+      const response = await CollegeService.getColleges({ limit: 100 });
+      // Filter colleges that match saved IDs
+      const filtered = response.colleges.filter((c) => savedCollegeIds.includes(c.id));
+      setSavedColleges(filtered);
+    } catch (err) {
+      console.error("Failed to load saved colleges", err);
+      setError(true);
+    } finally {
+      setLoading(false);
     }
-    loadSaved();
   }, [nextAuthIsAuthenticated, savedCollegeIds]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadSaved();
+  }, [loadSaved]);
 
   // Hydration Mount Guard
   if (!mounted) {
@@ -87,7 +93,7 @@ export default function SavedPage() {
      <div className="flex flex-col gap-6 py-6">
        <div>
          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-           <Bookmark className="h-7 w-7 text-primary fill-current" />
+           <Bookmark aria-hidden="true" className="h-7 w-7 text-primary fill-current" />
            <span>Saved Colleges</span>
          </h1>
          <p className="text-sm text-muted-foreground mt-1">
@@ -95,7 +101,13 @@ export default function SavedPage() {
          </p>
        </div>
  
-       {loading ? (
+       {error ? (
+         <ErrorState
+           title="Unable to Load Shortlist"
+           description="We had trouble fetching your saved bookmarks. Please check your network and try again."
+           onRetry={loadSaved}
+         />
+       ) : loading ? (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            {[1, 2].map((i) => (
              <div key={i} className="h-44 rounded-xl border border-border bg-card animate-pulse" />
@@ -103,7 +115,7 @@ export default function SavedPage() {
          </div>
        ) : savedColleges.length === 0 ? (
          <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border rounded-2xl bg-card/30 text-center px-4">
-           <Bookmark className="h-12 w-12 text-muted-foreground/60 stroke-[1.2]" />
+           <Bookmark aria-hidden="true" className="h-12 w-12 text-muted-foreground/60 stroke-[1.2]" />
            <h3 className="font-bold text-lg mt-4">Your shortlist is empty</h3>
            <p className="text-sm text-muted-foreground mt-1 max-w-sm">
              Save colleges from the discovery catalog to bookmark them for quick access later.
@@ -116,9 +128,9 @@ export default function SavedPage() {
            </Link>
          </div>
        ) : (
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6 list-none p-0 m-0">
            {savedColleges.map((college) => (
-             <div
+             <li
                key={college.id}
                className="relative rounded-xl border border-border bg-card p-5 shadow-sm flex items-start gap-4"
              >
@@ -150,13 +162,13 @@ export default function SavedPage() {
               <button
                 onClick={() => toggleSaveCollege(college.id)}
                 className="absolute top-5 right-5 text-muted-foreground hover:text-destructive transition-colors"
-                title="Remove from bookmarks"
+                aria-label={`Remove ${college.name} from bookmarks`}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 aria-hidden="true" className="h-4 w-4" />
               </button>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

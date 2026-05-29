@@ -43,14 +43,16 @@ export function DetailActions({ college }: DetailActionsProps) {
       <Button
         onClick={handleSaveToggle}
         variant={isSaved ? "secondary" : "default"}
+        aria-pressed={isSaved}
+        aria-label={isSaved ? `Remove ${college.name} from shortlisted list` : `Save ${college.name} to shortlisted list`}
         className={cn(
-          "flex-1 sm:flex-none gap-1.5 h-10 px-4 font-bold transition-all shadow-sm",
+          "flex-1 sm:flex-none gap-1.5 h-10 px-4 font-bold transition-all shadow-sm cursor-pointer",
           isSaved 
             ? "bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20 hover:text-amber-600 border" 
             : "shadow-primary/20"
         )}
       >
-        <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} />
+        <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} aria-hidden="true" />
         <span>{isSaved ? "Shortlisted" : "Save College"}</span>
       </Button>
     </div>

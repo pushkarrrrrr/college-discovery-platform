@@ -46,5 +46,5 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET || "super-secret-key-for-edu-discover-platform-mvp-12345",
+  secret: process.env.NEXTAUTH_SECRET,
 };

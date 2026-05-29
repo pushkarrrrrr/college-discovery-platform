@@ -17,13 +17,14 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <div
+      role="alert"
       className={cn(
         "flex flex-col items-center justify-center py-16 px-6 text-center border border-destructive/20 rounded-2xl bg-destructive/5 shadow-sm max-w-lg mx-auto",
         className
       )}
     >
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive border border-destructive/25 mb-4 animate-bounce">
-        <AlertTriangle className="h-5 w-5" />
+        <AlertTriangle aria-hidden="true" className="h-5 w-5" />
       </div>
       
       <h3 className="text-lg font-bold tracking-tight text-foreground">
@@ -36,7 +37,7 @@ export function ErrorState({
       
       {onRetry && (
         <Button onClick={onRetry} variant="outline" size="sm" className="mt-6 gap-1.5 border-destructive/30 hover:bg-destructive/10 hover:text-destructive transition-colors">
-          <RefreshCw className="h-3.5 w-3.5" />
+          <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
           <span>Retry Request</span>
         </Button>
       )}

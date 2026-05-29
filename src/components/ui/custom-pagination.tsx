@@ -71,7 +71,7 @@ export function CustomPagination({
           onClick={() => onPageChange(currentPage - 1)}
           className="text-xs h-9 px-3 gap-1"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           <span>Previous</span>
         </Button>
         <span className="text-xs font-semibold self-center text-muted-foreground">
@@ -85,7 +85,7 @@ export function CustomPagination({
           className="text-xs h-9 px-3 gap-1"
         >
           <span>Next</span>
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight aria-hidden="true" className="h-4 w-4" />
         </Button>
       </div>
 
@@ -110,7 +110,7 @@ export function CustomPagination({
                 className="h-8 w-8"
                 aria-label="Previous Page"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft aria-hidden="true" className="h-4 w-4" />
               </Button>
             </li>
 
@@ -119,7 +119,7 @@ export function CustomPagination({
               if (page === "ellipsis") {
                 return (
                   <li key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-muted-foreground">
-                    <MoreHorizontal className="h-4 w-4" />
+                    <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
                   </li>
                 );
               }
@@ -155,7 +155,7 @@ export function CustomPagination({
                 className="h-8 w-8"
                 aria-label="Next Page"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight aria-hidden="true" className="h-4 w-4" />
               </Button>
             </li>
           </ul>

@@ -75,6 +75,7 @@ export default async function CollegeDetailPage({ params }: PageProps) {
             src={college.coverImage}
             alt={college.name}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 850px"
             priority
             className="object-cover"
           />
@@ -90,6 +91,7 @@ export default async function CollegeDetailPage({ params }: PageProps) {
                 src={college.logo}
                 alt={`${college.name} logo`}
                 fill
+                sizes="(max-width: 640px) 80px, 96px"
                 className="object-cover"
               />
             </div>
