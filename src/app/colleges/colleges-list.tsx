@@ -192,12 +192,9 @@ export function CollegesList() {
 
   // Sync URL search parameters back to search input state (e.g. browser back/forward buttons)
   useEffect(() => {
-    const urlSearch = searchParams.get("search") || "";
-    if (urlSearch !== searchText) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSearchText(urlSearch);
-    }
-  }, [searchParams, searchText]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSearchText(search);
+  }, [search]);
 
   // 5. Fetch colleges data on filter parameter changes
   const fetchCollegesData = useCallback(async () => {
